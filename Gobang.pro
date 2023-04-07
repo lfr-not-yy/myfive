@@ -20,12 +20,14 @@ SOURCES += \
     chessai.cpp \
     gamewidget.cpp \
     main.cpp \
-    widget.cpp
+    widget.cpp \
+    zobrist.cpp
 
 HEADERS += \
     chessai.h \
     gamewidget.h \
-    widget.h
+    widget.h \
+    zobrist.h
 
 FORMS += \
     gamewidget.ui \

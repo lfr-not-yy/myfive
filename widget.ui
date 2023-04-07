@@ -16,10 +16,10 @@
   <widget class="QPushButton" name="btn_player">
    <property name="geometry">
     <rect>
-     <x>180</x>
-     <y>300</y>
-     <width>75</width>
-     <height>23</height>
+     <x>154</x>
+     <y>262</y>
+     <width>101</width>
+     <height>61</height>
     </rect>
    </property>
    <property name="sizePolicy">
@@ -42,9 +42,9 @@
    <property name="geometry">
     <rect>
      <x>390</x>
-     <y>300</y>
-     <width>75</width>
-     <height>23</height>
+     <y>262</y>
+     <width>101</width>
+     <height>61</height>
     </rect>
    </property>
    <property name="sizePolicy">
@@ -60,14 +60,14 @@
   <widget class="QLabel" name="label">
    <property name="geometry">
     <rect>
-     <x>310</x>
-     <y>150</y>
-     <width>36</width>
-     <height>16</height>
+     <x>215</x>
+     <y>140</y>
+     <width>201</width>
+     <height>71</height>
     </rect>
    </property>
    <property name="text">
-    <string>五子棋</string>
+    <string>五 子 棋</string>
    </property>
    <property name="alignment">
     <set>Qt::AlignCenter</set>

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>635</width>
-    <height>460</height>
+    <width>728</width>
+    <height>544</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,10 +16,10 @@
   <widget class="QPushButton" name="btn_return">
    <property name="geometry">
     <rect>
-     <x>520</x>
-     <y>410</y>
-     <width>75</width>
-     <height>23</height>
+     <x>580</x>
+     <y>420</y>
+     <width>111</width>
+     <height>51</height>
     </rect>
    </property>
    <property name="text">
@@ -29,17 +29,17 @@
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>510</x>
-     <y>21</y>
+     <x>580</x>
+     <y>10</y>
      <width>91</width>
-     <height>91</height>
+     <height>141</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
      <widget class="QLabel" name="label">
       <property name="text">
-       <string>白棋</string>
+       <string>   白棋</string>
       </property>
      </widget>
     </item>
@@ -58,17 +58,17 @@
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>510</x>
+     <x>580</x>
      <y>160</y>
      <width>91</width>
-     <height>91</height>
+     <height>141</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout_2">
     <item>
      <widget class="QLabel" name="label_2">
       <property name="text">
-       <string>黑棋 </string>
+       <string>   黑棋 </string>
       </property>
      </widget>
     </item>
@@ -87,10 +87,10 @@
   <widget class="QLabel" name="lb_timeuse">
    <property name="geometry">
     <rect>
-     <x>460</x>
-     <y>270</y>
-     <width>151</width>
-     <height>30</height>
+     <x>350</x>
+     <y>469</y>
+     <width>221</width>
+     <height>51</height>
     </rect>
    </property>
    <property name="text">
@@ -100,10 +100,10 @@
   <widget class="QLabel" name="lb_nodeNum">
    <property name="geometry">
     <rect>
-     <x>460</x>
-     <y>300</y>
-     <width>151</width>
-     <height>30</height>
+     <x>10</x>
+     <y>470</y>
+     <width>171</width>
+     <height>51</height>
     </rect>
    </property>
    <property name="text">
@@ -113,14 +113,40 @@
   <widget class="QLabel" name="lb_eval">
    <property name="geometry">
     <rect>
-     <x>460</x>
-     <y>330</y>
-     <width>151</width>
-     <height>30</height>
+     <x>180</x>
+     <y>469</y>
+     <width>171</width>
+     <height>51</height>
     </rect>
    </property>
    <property name="text">
     <string>ai局面估分:</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="btn_restart">
+   <property name="geometry">
+    <rect>
+     <x>580</x>
+     <y>360</y>
+     <width>111</width>
+     <height>51</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>重新开始</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="btn_regret">
+   <property name="geometry">
+    <rect>
+     <x>580</x>
+     <y>480</y>
+     <width>111</width>
+     <height>51</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>悔棋</string>
    </property>
   </widget>
  </widget>
