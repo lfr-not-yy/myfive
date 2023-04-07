@@ -1,15 +1,17 @@
 #include "chessai.h"
 
+int usedchesses[15][15];
 chessAi::chessAi()
 {
     init_tuple6type();
     qDebug()<<"初始化ai";
 }
-
+//检查是否在棋盘内
 bool chessAi::checkBound(int x,int y){
     if(x>=0&&x<15&&y>=0&&y<15)return true;
     else return false;
 }
+//对四个方向xy坐标的设置
 QPoint chessAi::getXY(int row, int col, int dir, int rel){
     QPoint p;
     if(dir==RIGHT){
@@ -27,16 +29,20 @@ QPoint chessAi::getXY(int row, int col, int dir, int rel){
     }
     return p;
 }
+//对一个位置的贪心算法
 int chessAi::calcOnePosGreedy(int board[15][15],int row, int col, int C_ME){
     int sum=0;
     for(int i=0;i<4;++i){//四个方向
         for(int j=0;j<5;++j){//每个方向上最多5个五元组
+            //顶点需要改变，终点无需改变，评估了该棋子两侧各四个棋子
             QPoint start=getXY(row,col,RIGHT+i,j-4);//五元组顶点位置
             QPoint end=getXY(start.x(),start.y(),RIGHT+i,4);//五元组最远位置
             if(checkBound(start.x(),start.y())&&checkBound(end.x(),end.y())){//若五元组下标均合法
                 int blackChess=0;
                 int whiteChess=0;
                 for(int k=0;k<5;++k){//对五元组5个位置考察
+                    //Right+i是为了遍历四个方向
+                    //在这九个棋子中，按顺序每次取五个来探查
                     QPoint tmp=getXY(start.x(),start.y(),RIGHT+i,k);
                     if(board[tmp.x()][tmp.y()]==C_BLACK)blackChess++;
                     if(board[tmp.x()][tmp.y()]==C_WHITE)whiteChess++;
@@ -47,6 +53,7 @@ int chessAi::calcOnePosGreedy(int board[15][15],int row, int col, int C_ME){
     }
     return sum;
 }
+//对五元组的棋形打分
 int chessAi::tupleScoreGreedy(int black, int white, int C_ME){
     //连5
     if(C_ME==C_BLACK&&black==5)return 9999999;
@@ -54,7 +61,9 @@ int chessAi::tupleScoreGreedy(int black, int white, int C_ME){
     //全空
     if(black==0&&white==0)return 7;
     //polluted
+    //如果这个五元组既有白棋又有黑棋，0分
     else if(black>=1&&white>=1)return 0;
+    //分成ai执黑和ai执子白来讨论
     else if(C_ME==C_BLACK){
         if(black==1&&white==0)return 35;
         else if(black==2&&white==0)return 800;
@@ -74,10 +83,13 @@ int chessAi::tupleScoreGreedy(int black, int white, int C_ME){
         else if(black==0&&white==3)return 15000;
         else return 800000;
     }
+
 }
+//给棋盘上每个空的位置打分
 QPoint chessAi::findBestMoveGreedy(int C_ME){
-    int bestScore=0;
-    int bestRow=0,bestCol=0;
+    int bestScore=-1000;
+    //这个地方不应该设置最佳点位的默认值为0，当找不到最佳位置的时候，ai会选择下在0,0上，如果多次找不到最佳点位，就会多次下在0，0上
+    int bestRow=-1,bestCol=-1;
     for(int i=0;i<15;++i){
         for(int j=0;j<15;++j){
             if(chesses[i][j]==C_NONE){//空的位置
@@ -90,11 +102,25 @@ QPoint chessAi::findBestMoveGreedy(int C_ME){
             }
         }
     }
+    //如果找不到最佳位置，就选择棋盘上第一个能找到的空位
+    if(bestRow<0||bestCol<0){
+        for(int i=0;i<15;++i){
+            for(int j=0;j<15;++j){
+                if(chesses[i][j]==C_NONE){//空的位置
+                        bestRow=i;
+                        bestCol=j;
+                }
+            }
+        }
+    }
     QPoint p(bestRow,bestCol);
+
     return p;
 }
+
 void chessAi::init_tuple6type(){
-    memset(tuple6type,0,sizeof (tuple6type));//全部设为0
+    //把六元组的默认值设为0
+    memset(tuple6type,0,sizeof (tuple6type));
     //白连5,ai赢
     tuple6type[2][2][2][2][2][2]=WIN;
     tuple6type[2][2][2][2][2][0]=WIN;
@@ -157,8 +183,9 @@ void chessAi::init_tuple6type(){
                 for(p4=0;p4<3;++p4){
                     for(p5=0;p5<3;++p5){
                         for(p6=0;p6<4;++p6){
-                            x=y=ix=iy=0;
 
+                            x=y=ix=iy=0;
+                            //p1为左，p6为右，其余为中间，所以两个数都自增
                             if(p1==1)x++;
                             else if(p1==2)y++;
 
@@ -281,7 +308,9 @@ void chessAi::init_tuple6type(){
     }
 }
 
-EVALUATION chessAi::evaluate(int board[15][15],bool needPrint){
+
+//统计此时局面分数
+EVALUATION chessAi::evaluate(int board[15][15],bool needPrint) {
     //各棋型权重
     int weight[17]={0,1000000,-10000000,50000,-100000,400,-100000,400,-8000,20,-50,20,-50,1,-3,1,-3};
 
@@ -291,10 +320,14 @@ EVALUATION chessAi::evaluate(int board[15][15],bool needPrint){
 
 
     int A[17][17];//包括边界的虚拟大棋盘,board[i][j]=A[i-1][j-1],3表示边界
-    for(int i=0;i<17;++i)A[i][0]=3;
-    for(int i=0;i<17;++i)A[i][16]=3;
-    for(int j=0;j<17;++j)A[0][j]=3;
-    for(int j=0;j<17;++j)A[16][j]=3;
+    for(int i=0;i<17;++i){
+        A[i][0]=3;
+        A[i][16]=3;
+    }
+    for(int j=0;j<17;++j){
+        A[0][j]=3;
+        A[16][j]=3;
+    }
     for(int i=0;i<15;++i)
         for(int j=0;j<15;++j)
             A[i+1][j+1]=board[i][j];
@@ -336,6 +369,7 @@ EVALUATION chessAi::evaluate(int board[15][15],bool needPrint){
         score+=(stat[0][i]+stat[1][i]+stat[2][i]+stat[3][i])*weight[i];//初步计分
 
         int count=stat[0][i]+stat[1][i]+stat[2][i]+stat[3][i];//统计所有方向上部分棋型的个数
+        //统计不同类型，主要是自己的杀棋和正负判断
         if(i==WIN)eval.STAT[WIN]=count;
         else if(i==LOSE)eval.STAT[LOSE]=count;
         else if(i==FLEX4)eval.STAT[FLEX4]=count;
@@ -360,7 +394,9 @@ EVALUATION chessAi::evaluate(int board[15][15],bool needPrint){
     return eval;
 }
 
-POINTS chessAi::seekPoints(int board[15][15]){
+
+//从空位中选出20个单独位置评分最高的并进行评估
+POINTS chessAi::seekPoints(int board[15][15],int flag,int depth){
     bool B[15][15];//标记数组
     int worth[15][15];
     POINTS best_points;
@@ -368,7 +404,7 @@ POINTS chessAi::seekPoints(int board[15][15]){
     memset(B,0,sizeof (B));
     for(int i=0;i<15;++i){//每个非空点附近8个方向延伸3个深度,若不越界则标记为可走
         for(int j=0;j<15;++j){
-            if(board[i][j]!=C_NONE){
+            if(board[i][j]!=C_NONE&&myChesses[i][j]!=0){
                 for(int k=-3;k<=3;++k){
                     if(i+k>=0&&i+k<15){
                         B[i+k][j]=true;
@@ -380,22 +416,32 @@ POINTS chessAi::seekPoints(int board[15][15]){
             }
         }
     }
-
+    //评估每个空位的分数
+    int couWorth=0;
     for(int i=0;i<15;++i){
         for(int j=0;j<15;++j){
             worth[i][j]=-INT_MAX;
-            if(board[i][j]==C_NONE&&B[i][j]==true){
+            if(board[i][j]==C_NONE&&B[i][j]==true&&myChesses[i][j]==0){
                 //board[i][j]=C_BLACK;
                 worth[i][j]=calcOnePosGreedy(board,i,j,C_WHITE);
+                //记录空位数量
+                if(worth[i][j]>-INT_MAX) couWorth++;
                 //worth[i][j]=evaluate(board).score;
                 //board[i][j]=C_NONE;
             }
         }
     }
 
-    int w;
-    for(int k=0;k<20;++k){
+    //空位超过20时取20
+    if(couWorth>20){
+        couWorth=20;
+        //qDebug()<<"取了20";
+    }
+    //选出20个分数最高的
+    int w,reflag,rescore,hashkey;
+    for(int k=0;k<couWorth;++k){
         w=-INT_MAX;
+        //找出一个worth中的最大值
         for(int i=0;i<15;++i){
             for(int j=0;j<15;++j){
                 if(worth[i][j]>w){
@@ -405,17 +451,31 @@ POINTS chessAi::seekPoints(int board[15][15]){
                 }
             }
         }
-
+        int board1[15][15];
+        copyBoard(board,board1);
+        //把20个高分点依次变成白棋并进行局势评估
         int x=best_points.pos[k].x(),y=best_points.pos[k].y();
-        board[x][y]=C_WHITE;
-        best_points.score[k]=evaluate(board).score;
-        board[x][y]=C_NONE;
+        //qDebug()<<"不足20位置2";
+        board1[x][y]=C_WHITE;
+        hashkey=zobb.calculateHash(board1);
 
+        /*if(zobb.probe(hashkey,depth,rescore,reflag)){
+            if(reflag==flag||(reflag==EXACT&&flag!=KILL)){
+                best_points.score[k]= rescore;
+                //qDebug()<<"规避了";
+            }
+        }
+        else{
+            best_points.score[k]=evaluate(board1,flag).score;
+            zobb.store(hashkey,depth,best_points.score[k],flag);
+        }*/
+        best_points.score[k]=evaluate(board1,flag).score;
+        board1[x][y]=C_NONE;
         worth[best_points.pos[k].x()][best_points.pos[k].y()]=-INT_MAX;//清除掉上一点,计算下一点的位置和分数
     }
     return best_points;
 }
-
+//复制棋盘
 void chessAi::copyBoard(int (*A)[15], int (*B)[15]){
     for(int i=0;i<15;++i){
         for(int j=0;j<15;++j){
@@ -425,6 +485,7 @@ void chessAi::copyBoard(int (*A)[15], int (*B)[15]){
         }
     }
 }
+//黑白颠倒
 void chessAi::reverseBoard(int (*A)[15], int (*B)[15]){
     for(int i=0;i<15;++i){
         for(int j=0;j<15;++j){
@@ -435,30 +496,67 @@ void chessAi::reverseBoard(int (*A)[15], int (*B)[15]){
     }
 }
 
+//分析函数，其变量分别为：棋盘、深度、max的最小值、min的最大值，当max的最小值大于min的最大值，可以剪除该分支
 int chessAi::analyse(int (*board)[15], int depth,int alpha, int beta){
+    //用来区分算杀，精确值节点和a,b结点
+    unsigned long long hashkey;
+    int flag,reflag,rescore;
     EVALUATION EVAL=evaluate(board);
+    int board1[15][15];
+    copyBoard(board,board1);
+    //如果有精确结果就返回精确结果
+    /*hashkey=zobb.calculateHash(board);
+    if(zobb.probe(hashkey,depth,rescore,reflag)){
+        if(reflag==EXACT)
+            return rescore;
+    }*/
     if(depth==0||EVAL.result!=R_DRAW){//抵达最深层/如果模拟落子可以分出输赢，那么直接返回结果，不需要再搜索
         nodeNum+=1;
         if(depth==0){
             POINTS P;
-            P=seekPoints(board);
+            //如果有精确结果就返回精确结果
+            hashkey=zobb.calculateHash(board);
+                if(zobb.probe(hashkey,depth,rescore,reflag)){
+                    if(reflag==EXACT)
+                        return rescore;
+                }
+            P=seekPoints(board1,EXACT,depth);
+
+            hashkey=zobb.calculateHash(board1);
+            zobb.store(hashkey,depth,alpha,EXACT);
 
             return P.score[0];//返回最佳位置对应的最高分
         }else return EVAL.score;
     }else if(depth%2==0){//max层,我方(白)决策
         //qDebug()<<"白方决策！";
 
-        POINTS P=seekPoints(board);
+        POINTS P=seekPoints(board1,ALPHA,depth);
 
         for(int i=0;i<10;++i){
             //qDebug()<<"白方模拟下"<<P.pos[i].x()<<","<<P.pos[i].y();
             int sameBoard[15][15];
-            copyBoard(board,sameBoard);
-
+            copyBoard(board1,sameBoard);
             sameBoard[P.pos[i].x()][P.pos[i].y()]=C_WHITE;//模拟己方落子,不能用board,否则可能改变board的信息
-            int a=analyse(sameBoard,depth-1,alpha,beta);
+
+            hashkey=zobb.calculateHash(sameBoard);
+            int a;
+            //如果有alpha就返回alpha
+            if(zobb.probe(hashkey,depth,rescore,reflag)){
+                if(reflag==ALPHA)
+                    //qDebug()<<"al";
+                    a=rescore;
+            }
+
+            //在虚拟棋盘上落子之后继续迭代分析
+            else{
+                a=analyse(sameBoard,depth-1,alpha,beta);
+                hashkey=zobb.calculateHash(sameBoard);
+                zobb.store(hashkey,depth,a,ALPHA);
+            }
             if(a>alpha){
                 alpha=a;
+                //必须要在最外层的递归中设置位置
+
                 if(depth==6){
                     qDebug()<<"set decision:"<<P.pos[i].x()<<P.pos[i].y();
 
@@ -475,7 +573,7 @@ int chessAi::analyse(int (*board)[15], int depth,int alpha, int beta){
 
         int rBoard[15][15];
         reverseBoard(board,rBoard);
-        POINTS P=seekPoints(rBoard);//找对于黑子的最佳位置,需要将棋盘不同颜色反转,因为seekPoint是求白色方的最佳位置
+        POINTS P=seekPoints(rBoard,BETA,depth);//找对于黑子的最佳位置,需要将棋盘不同颜色反转,因为seekPoint是求白色方的最佳位置
 
         for(int i=0;i<10;++i){
             //qDebug()<<"黑方模拟下"<<P.pos[i].x()<<","<<P.pos[i].y();
@@ -484,12 +582,26 @@ int chessAi::analyse(int (*board)[15], int depth,int alpha, int beta){
             copyBoard(board,sameBoard);
 
             sameBoard[P.pos[i].x()][P.pos[i].y()]=C_BLACK;//模拟敌方落子
-            int a=analyse(sameBoard,depth-1,alpha,beta);
+
+            hashkey=zobb.calculateHash(sameBoard);
+            //如果有beta就返回beta
+            int a;
+            if(zobb.probe(hashkey,depth,rescore,reflag)){
+                if(reflag==BETA)
+                    //qDebug()<<"be";
+                    a=rescore;
+            }
+            else{
+                a=analyse(sameBoard,depth-1,alpha,beta);
+                hashkey=zobb.calculateHash(sameBoard);
+                zobb.store(hashkey,depth,beta,BETA);
+            }
             if(a<beta)beta=a;
             if(beta<=alpha)break;//剪枝
         }
         return beta;
     }
+
 }
 
 bool chessAi::analyse_kill(int (*board)[15], int depth){
@@ -497,7 +609,7 @@ bool chessAi::analyse_kill(int (*board)[15], int depth){
     if(depth==0||EVAL.result!=R_DRAW){
         if(depth==0){//若抵达最深层,走一步对白棋的最好位置,若白棋还没赢则返回false
             POINTS P;
-            P=seekPoints(board);            
+            P=seekPoints(board,KILL,depth);
             board[P.pos[0].x()][P.pos[0].y()]=C_WHITE;
 
             gameResult result=evaluate(board).result;
@@ -507,7 +619,7 @@ bool chessAi::analyse_kill(int (*board)[15], int depth){
         else return false;//白棋输
     }else if(depth%2==0){//max层,我方(白)决策
         if(depth==16||depth==14){//最开始4层选所有能走的10个点
-            POINTS P=seekPoints(board);
+            POINTS P=seekPoints(board,KILL,depth);
             for(int i=0;i<10;++i){
                 int sameBoard[15][15];
                 copyBoard(board,sameBoard);
@@ -527,7 +639,7 @@ bool chessAi::analyse_kill(int (*board)[15], int depth){
             }
             return false;
         }else{//后面只选杀棋点
-            QList<QPoint> pointList=seek_kill_points(board);//产生杀棋点
+            QList<QPoint> pointList=seek_kill_points(board,depth);//产生杀棋点
 
             if(pointList.length()==0)return false;//没有杀棋点
             for(auto i:pointList){
@@ -553,7 +665,7 @@ bool chessAi::analyse_kill(int (*board)[15], int depth){
     }else{//min层,敌方(黑)决策,只下对自己最好的棋
         int rBoard[15][15];
         reverseBoard(board,rBoard);
-        POINTS P=seekPoints(rBoard);//找对于黑子的最佳位置,需要将棋盘不同颜色反转,因为seekPoint是求白色方的最佳位置
+        POINTS P=seekPoints(rBoard,KILL,depth);//找对于黑子的最佳位置,需要将棋盘不同颜色反转,因为seekPoint是求白色方的最佳位置
 
         int sameBoard[15][15];
         copyBoard(board,sameBoard);
@@ -561,12 +673,13 @@ bool chessAi::analyse_kill(int (*board)[15], int depth){
         //无需剪枝
         return analyse_kill(sameBoard,depth-1);
     }
+
 }
 
-QList<QPoint> chessAi::seek_kill_points(int (*board)[15]){
+QList<QPoint> chessAi::seek_kill_points(int (*board)[15],int depth){
     QList<QPoint> pointList;
 
-    POINTS P=seekPoints(board);//一般来说,能冲4或者活3的必在评分前20的点内
+    POINTS P=seekPoints(board,KILL,depth);//一般来说,能冲4或者活3的必在评分前20的点内
 
     int sameBoard[15][15];
     copyBoard(board,sameBoard);
